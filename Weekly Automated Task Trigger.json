@@ -1,0 +1,431 @@
+{
+  "name": "Weekly Automated Task Trigger",
+  "nodes": [
+    {
+      "parameters": {
+        "chatId": "8347394087",
+        "text": "=🎬 TikTok Content Engine Complete!\n\n✅ Generated {{ $json.total_scripts }} viral-ready scripts\n📅 Date: {{ $json.generated_date }}\n\n📁 All scripts saved to Google Drive\n\nReady to film! 🚀",
+        "additionalFields": {}
+      },
+      "id": "ae39f669-6dff-451e-867d-bb7a9ad5d3cf",
+      "name": "Notify Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2000,
+        208
+      ],
+      "webhookId": "110dbb32-cfc8-4ebe-91b9-ddac6fde000b",
+      "credentials": {
+        "telegramApi": {
+          "id": "MJhKbKew14DQbFdd",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "76e75017-8caf-43ca-bb74-bc2a2a27a4f1",
+      "name": "Monday Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "brand_niche",
+              "value": "street wear",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "brand_voice",
+              "value": "gen z",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "products",
+              "value": "t-shirt, hoodies, cargos pants, plain tees. price range, 350,000- 400,000",
+              "type": "string"
+            },
+            {
+              "id": "4",
+              "name": "trends_data",
+              "value": "={{ $json.data }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6b650318-aabf-4e1a-a9b7-7db86919bc47",
+      "name": "Prepare Brand Context",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        528,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Based on these trending topics:\n{{ $json.trends_data }}\n\nCreate 10 short TikTok scripts that:\n1. Match the brand niche: {{ $json.brand_niche }}\n2. Use the brand voice: {{ $json.brand_voice }}\n3. Promote these products: {{ $json.products }}\n4. Are 15-60 seconds long\n5. Include a strong hook, engaging content, and clear CTA\n\nEach script should be punchy, viral-worthy, and ready to film.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an expert TikTok content creator who understands viral trends, short-form video hooks, and brand storytelling. You MUST respond with valid JSON only. Return a JSON object with a \"scripts\" array containing exactly 10 objects. Each object must have: \"title\" (catchy title), \"script\" (full 15-60 second script text), \"hook\" (opening hook line), and \"cta\" (call to action). No markdown, no explanations, only the JSON object."
+        }
+      },
+      "id": "ec668f17-1a8e-486b-9ed7-1dc52d2d84ce",
+      "name": "Generate Scripts",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        752,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "60642bc2-3609-4fd2-b4e5-60eec6cded30",
+      "name": "OpenAI Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        768,
+        576
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "Am343thCcxyXaWRw",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\"scripts\":[{\"title\":\"Hook Title\",\"script\":\"Full script text here\",\"hook\":\"Opening hook\",\"cta\":\"Call to action\"}]}"
+      },
+      "id": "4642b8f0-b165-44b4-8724-2bc2bfd92b12",
+      "name": "Script Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        896,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const output = $input.first().json.output;\nconst scripts = typeof output === \"string\" ? JSON.parse(output).scripts : output.scripts;\nreturn scripts.map((script, index) => ({\n  json: {\n    script_number: index + 1,\n    title: script.title,\n    script: script.script,\n    hook: script.hook,\n    cta: script.cta,\n    generated_at: new Date().toISOString()\n  }\n}));"
+      },
+      "id": "506a2652-45b7-49ff-ac19-4e4f8abcf39d",
+      "name": "Split Scripts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "content",
+              "value": "=🎬 TikTok Script #{{ $json.script_number }}\n\nTitle: {{ $json.title }}\n\n📌 HOOK:\n{{ $json.hook }}\n\n📝 SCRIPT:\n{{ $json.script }}\n\n✅ CTA:\n{{ $json.cta }}\n\n---\nGenerated: {{ $json.generated_at }}",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "filename",
+              "value": "=TikTok_Script_{{ $json.script_number }}_{{ $now.toFormat(\"yyyy-MM-dd\") }}.txt",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "33293324-da1a-4c55-9be3-aa1f29a6fea2",
+      "name": "Format Script Document",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1328,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "total_scripts",
+              "value": "={{ $(\"Split Scripts\").all().length }}",
+              "type": "number"
+            },
+            {
+              "id": "2",
+              "name": "generated_date",
+              "value": "={{ $now.toFormat(\"MMMM d, yyyy\") }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1cd4aa36-ebee-475b-8acb-216d479b1e16",
+      "name": "Summary Report",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1776,
+        208
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "createFromText",
+        "content": "={{ $json.content }}",
+        "name": "={{ $json.filename }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
+        "options": {}
+      },
+      "id": "dd2ca84c-9a8a-49d0-a7ab-00aaae3b8cfd",
+      "name": "Save to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1776,
+        400
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "8hLDrQcUbQLQU7tw",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "7a4de29d-3a26-414a-8aab-826b43440616",
+      "name": "Loop Scripts",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1552,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.google.com/search?q=trending+TikTok+content+Nigeria+this+week",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "9fbd9241-0437-405a-af1b-a86cc50e6e08",
+      "name": "Fetch TikTok Trends",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        304,
+        352
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Monday Schedule": {
+      "main": [
+        [
+          {
+            "node": "Fetch TikTok Trends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Brand Context": {
+      "main": [
+        [
+          {
+            "node": "Generate Scripts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Scripts": {
+      "main": [
+        [
+          {
+            "node": "Split Scripts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Scripts",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Script Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Generate Scripts",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Scripts": {
+      "main": [
+        [
+          {
+            "node": "Format Script Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Script Document": {
+      "main": [
+        [
+          {
+            "node": "Loop Scripts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary Report": {
+      "main": [
+        [
+          {
+            "node": "Notify Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Loop Scripts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Scripts": {
+      "main": [
+        [
+          {
+            "node": "Summary Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch TikTok Trends": {
+      "main": [
+        [
+          {
+            "node": "Prepare Brand Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "8737121d-dd40-4f2e-91ab-5b1654e3b4d3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "888dfd6ed2a992480b1f87155cc4e73a5c3b45cf8d4aeb11c070f79c96661de2"
+  },
+  "nodeGroups": [],
+  "id": "LE6VrkhVi5a4IQae",
+  "tags": []
+}
