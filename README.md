@@ -1,8 +1,10 @@
-# Ai-content-automation
+# Ai-content-automation workflow
  AI-powered content automation workflow built with n8n.
-# AI Content Automation Workflow
 
 ## Overview
+
+![workflow overview](ai%20content.png)
+
 An AI-powered content automation workflow built with n8n that discovers trending TikTok topics, generates weekly content ideas, creates AI-written scripts, and delivers the results automatically.
 
 ## Features
